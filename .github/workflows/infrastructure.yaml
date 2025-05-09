@@ -1,0 +1,79 @@
+name: Infrastructure
+
+on:
+    pull_request:
+        branches: [main]
+        paths:
+            - "deploy/infrastructure/**"
+            - ".github/workflows/infrastructure.yaml"
+    workflow_dispatch:
+        inputs:
+            action:
+                description: "Action to perform"
+                required: true
+                default: "plan"
+                type: choice
+                options:
+                    - plan
+                    - apply
+                    - destroy
+            environment:
+                description: "Environment"
+                required: true
+                default: "dev"
+                type: choice
+                options:
+                    - common
+                    - dev
+
+env:
+    AWS_REGION: eu-central-1
+
+jobs:
+    terraform:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: deploy/infrastructure
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: 1.11.0
+
+            - name: Terraform Format Check
+              working-directory: deploy/infrastructure/${{ github.event.inputs.environment || 'dev' }}
+              run: terraform fmt -check -recursive -diff
+              continue-on-error: true
+
+            - name: Terraform Init
+              working-directory: deploy/infrastructure/${{ github.event.inputs.environment || 'dev' }}
+              run: terraform init
+
+            - name: Terraform Validate
+              working-directory: deploy/infrastructure/${{ github.event.inputs.environment || 'dev' }}
+              run: terraform validate
+
+            - name: Terraform Plan
+              working-directory: deploy/infrastructure/${{ github.event.inputs.environment || 'dev' }}
+              run: terraform plan -no-color
+
+            - name: Terraform Apply
+              if: github.event.inputs.action == 'apply'
+              working-directory: deploy/infrastructure/${{ github.event.inputs.environment || 'dev' }}
+              run: terraform apply -auto-approve -no-color
+
+            - name: Terraform Destroy
+              if: github.event.inputs.action == 'destroy'
+              working-directory: deploy/infrastructure/${{ github.event.inputs.environment || 'dev' }}
+              run: terraform destroy -auto-approve -no-color
