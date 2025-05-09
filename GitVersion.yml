@@ -1,0 +1,40 @@
+mode: ContinuousDelivery
+branches:
+    main:
+        tag: ""
+        increment: Patch
+        prevent-increment-of-merged-branch-version: true
+        track-merge-target: false
+        regex: ^main$
+        source-branches: ["develop", "hotfix"]
+        is-release-branch: true
+    develop:
+        tag: alpha
+        increment: Minor
+        prevent-increment-of-merged-branch-version: false
+        track-merge-target: true
+        regex: ^dev(elop)?(ment)?$
+        source-branches: ["main", "feature"]
+        is-release-branch: false
+    feature:
+        tag: feature
+        increment: Inherit
+        prevent-increment-of-merged-branch-version: false
+        regex: ^features?[/-]
+        source-branches: ["develop"]
+    hotfix:
+        tag: hotfix
+        increment: Patch
+        prevent-increment-of-merged-branch-version: false
+        regex: ^hotfix(es)?[/-]
+        source-branches: ["main"]
+    pull-request:
+        tag: PR
+        increment: Inherit
+        prevent-increment-of-merged-branch-version: false
+        tag-number-pattern: '[/-](?<number>\d+)[-/]'
+        regex: ^(pull|pull\-requests|pr)[/-]
+        source-branches: ["develop", "main", "feature", "hotfix"]
+ignore:
+    sha: []
+merge-message-formats: {}
