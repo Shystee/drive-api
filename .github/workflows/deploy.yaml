@@ -1,0 +1,127 @@
+name: Deploy
+
+on:
+    push:
+        branches: [main]
+        paths-ignore:
+            - "**.md"
+            - ".github/workflows/ci.yaml"
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: "Environment to deploy to"
+                required: true
+                default: "dev"
+                type: choice
+                options:
+                    - dev
+
+env:
+    AWS_REGION: eu-central-1
+    ECR_REPOSITORY: drive/api
+    ECS_CLUSTER: drive-dev
+    ECS_SERVICE: drive-api
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-latest
+        outputs:
+            image-tag: ${{ steps.prep.outputs.version }}
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Prepare
+              id: prep
+              run: |
+                  VERSION=sha-${GITHUB_SHA::8}
+                  echo "version=${VERSION}" >> $GITHUB_OUTPUT
+                  echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build, tag, and push image to Amazon ECR
+              id: build-image
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+              run: |
+                  # Build a docker container and push it to ECR
+                  docker build \
+                    --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+                    --tag $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+                    --file Dockerfile \
+                    .
+                  docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                  docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+                  echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    deploy-infrastructure:
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: deploy/infrastructure
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: 1.11.0
+
+            - name: Terraform Init
+              working-directory: deploy/infrastructure/dev
+              run: terraform init
+
+            - name: Terraform Plan
+              working-directory: deploy/infrastructure/dev
+              run: terraform plan -no-color
+              continue-on-error: true
+
+            - name: Terraform Apply
+              working-directory: deploy/infrastructure/dev
+              run: terraform apply -auto-approve -no-color
+
+    deploy-application:
+        needs: [build-and-push, deploy-infrastructure]
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Force new deployment
+              run: |
+                  aws ecs update-service \
+                    --cluster ${{ env.ECS_CLUSTER }} \
+                    --service ${{ env.ECS_SERVICE }} \
+                    --force-new-deployment \
+                    --no-cli-pager
+
+            - name: Wait for service to be stable
+              run: |
+                  aws ecs wait services-stable \
+                    --cluster ${{ env.ECS_CLUSTER }} \
+                    --services ${{ env.ECS_SERVICE }} \
+                    --no-cli-pager
