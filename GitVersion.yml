@@ -1,0 +1,49 @@
+mode: ContinuousDelivery
+tag-prefix: "[vV]?"
+major-version-bump-message: '\+semver:\s?(breaking|major)'
+minor-version-bump-message: '\+semver:\s?(feature|minor)'
+patch-version-bump-message: '\+semver:\s?(fix|patch)'
+no-bump-message: '\+semver:\s?(none|skip)'
+branches:
+    main:
+        label: ""
+        increment: Patch
+        prevent-increment:
+            of-merged-branch: true
+        track-merge-target: false
+        regex: ^main$
+        source-branches: ["develop", "hotfix"]
+        is-release-branch: true
+    develop:
+        label: alpha
+        increment: Minor
+        prevent-increment:
+            of-merged-branch: false
+        track-merge-target: true
+        regex: ^dev(elop)?(ment)?$
+        source-branches: ["main", "feature"]
+        is-release-branch: false
+    feature:
+        label: feature
+        increment: Inherit
+        prevent-increment:
+            of-merged-branch: false
+        regex: ^features?[/-]
+        source-branches: ["develop"]
+    hotfix:
+        label: hotfix
+        increment: Patch
+        prevent-increment:
+            of-merged-branch: false
+        regex: ^hotfix(es)?[/-]
+        source-branches: ["main"]
+    pull-request:
+        label: PullRequest{Number}
+        increment: Inherit
+        prevent-increment:
+            of-merged-branch: false
+        regex: ^(pull|pull\-requests|pr)[/-]
+        source-branches: ["develop", "main", "feature", "hotfix"]
+ignore:
+    sha: []
+merge-message-formats: {}

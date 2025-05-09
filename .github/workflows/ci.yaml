@@ -1,0 +1,61 @@
+name: CI
+
+on:
+    push:
+        branches: [main, develop]
+        paths:
+            - "src/**"
+            - "tests/**"
+            - "*.sln"
+            - "*.csproj"
+            - ".github/workflows/ci.yaml"
+            - "GitVersion.yml"
+    pull_request:
+        branches: [main, develop]
+        paths:
+            - "src/**"
+            - "tests/**"
+            - "*.sln"
+            - "*.csproj"
+            - ".github/workflows/ci.yaml"
+            - "GitVersion.yml"
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # Full history needed for GitVersion
+
+            - name: Install GitVersion
+              uses: gittools/actions/gitversion/setup@v4
+              with:
+                  versionSpec: "6.x"
+
+            - name: Determine Version
+              id: gitversion
+              uses: gittools/actions/gitversion/execute@v0
+              with:
+                  useConfigFile: true
+
+            - name: Display version
+              run: |
+                  echo "Version: ${{ steps.gitversion.outputs.semVer }}"
+                  echo "Version for NuGet: ${{ steps.gitversion.outputs.nuGetVersionV2 }}"
+                  echo "Branch name: ${{ steps.gitversion.outputs.branchName }}"
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: 9.0.x
+
+            - name: Restore dependencies
+              run: dotnet restore
+
+            - name: Build
+              run: dotnet build --no-restore --configuration Release -p:Version=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+
+            - name: Test
+              run: dotnet test --no-build --verbosity normal --configuration Release
