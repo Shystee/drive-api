@@ -17,8 +17,6 @@ branches:
     develop:
         label: alpha
         increment: Minor
-        prevent-increment:
-            of-merged-branch: false
         track-merge-target: true
         regex: ^dev(elop)?(ment)?$
         source-branches: ["main", "feature"]
@@ -26,8 +24,6 @@ branches:
     feature:
         label: feature
         increment: Inherit
-        prevent-increment:
-            of-merged-branch: false
         regex: ^features?[/-]
         source-branches: ["develop"]
     hotfix:
@@ -40,9 +36,7 @@ branches:
     pull-request:
         label: PullRequest{Number}
         increment: Inherit
-        prevent-increment:
-            of-merged-branch: false
-        regex: ^(pull|pull\-requests|pr)[/-]
+        regex: '^(?:pull|pr)[/-](?<Number>\d+)'
         source-branches: ["develop", "main", "feature", "hotfix"]
 ignore:
     sha: []
