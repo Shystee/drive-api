@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon.SecretsManager;
 using Drive.Api;
+using Drive.Api.Core.Clerk;
 using Drive.Api.Core.SecretManager;
 using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,15 @@ builder.Services.AddDbContextWithWolverineIntegration<ApplicationDbContext>(x =>
 	x.UseNpgsql(connectionString);
 });
 
+builder.Services.AddAuthentication(ClerkAuthenticationDefaults.AuthenticationScheme)
+	.AddClerkAuthentication(ClerkAuthenticationDefaults.AuthenticationScheme, options =>
+	{
+		options.Authority = "https://comic-kitten-33.clerk.accounts.dev";
+		options.AuthorizedParty = "http://localhost:5173";
+	});
+
+builder.Services.AddAuthorizationBuilder();
+
 // Host
 builder.Host.UseWolverine(opts =>
 {
@@ -67,6 +77,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/healthz");
 app.MapWolverineEndpoints(opts =>
