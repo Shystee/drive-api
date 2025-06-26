@@ -1,5 +1,6 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.StaticFiles;
 using NanoidDotNet;
 using Wolverine.Http;
@@ -14,6 +15,7 @@ public class UploadEndpoint
 {
 	private static readonly FileExtensionContentTypeProvider Provider = new();
 
+	[Authorize]
 	[WolverinePost("/api/file")]
 	public static async Task<(InitializeUploadResponse, StartUpload)> InitializeUpload(
 		InitializeUploadRequest request,
