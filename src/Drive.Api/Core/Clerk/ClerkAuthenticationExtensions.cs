@@ -22,6 +22,7 @@ public static class ClerkAuthenticationExtensions
 
 		return builder.AddJwtBearer(authenticationScheme, x =>
 		{
+			x.MapInboundClaims = false;
 			x.Authority = optionsObj.Authority;
 			x.TokenValidationParameters = new TokenValidationParameters
 			{
