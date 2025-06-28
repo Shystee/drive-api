@@ -57,8 +57,6 @@ builder.Host.UseWolverine(opts =>
 	opts.PersistMessagesWithPostgresql(connectionString, "wolverine");
 	opts.UseAmazonSqsTransport().AutoProvision().AutoPurgeOnStartup();
 
-	opts.PublishMessage<StartUpload>().ToSqsQueue("start-upload");
-	opts.ListenToSqsQueue("start-upload");
 	opts.ListenToSqsQueue("upload-completed")
 		.ReceiveRawJsonMessage(typeof(S3UploadCompleted), o =>
 		{

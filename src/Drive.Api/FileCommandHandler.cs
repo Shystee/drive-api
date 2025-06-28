@@ -5,25 +5,32 @@ namespace Drive.Api;
 
 public record CreateFileCommand(
 	string S3Key,
-	string FileId,
+	Ulid FileId,
 	string OriginalFileName,
 	string ContentType,
-	long SizeInBytes);
+	long Size,
+	Ulid AlbumId);
 
 public class FileCommandHandler
 {
 	[Transactional]
 	public static async Task Handle(CreateFileCommand command, ApplicationDbContext context, ILogger<FileCommandHandler> logger)
 	{
-		logger.LogInformation("Creating file record for {S3Key}", command.S3Key);
-		var file = new File(
+		var album = await context.Albums.FindAsync(command.AlbumId);
+		if (album is null)
+		{
+			logger.LogError("Album {AlbumId} not found for file {S3Key}", command.AlbumId, command.S3Key);
+			throw new OperationCanceledException("Album not found for file " + command.AlbumId);
+		}
+		
+		
+		logger.LogInformation("Adding a file record {S3Key} to album {AlbumId}", command.S3Key, command.AlbumId);
+		album.AddFile(new File(
 			command.FileId,
 			command.OriginalFileName,
 			command.S3Key,
 			command.ContentType,
-			command.SizeInBytes
-		);
-
-		await context.Files.AddAsync(file);
+			command.Size
+		));
 	}
 }

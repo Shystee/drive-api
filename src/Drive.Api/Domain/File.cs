@@ -2,22 +2,22 @@
 
 public class File
 {
-	public File(string id, string originalFileName, string s3Key, string contentType, long sizeInBytes)
+	public File(Ulid id, string name, string s3Key, string contentType, long size)
 	{
 		Id = id;
-		OriginalFileName = originalFileName;
+		Name = name;
 		S3Key = s3Key;
 		ContentType = contentType;
-		SizeInBytes = sizeInBytes;
+		Size = size;
 	}
 
 	public string ContentType { get; }
 
-	public string Id { get; }
+	public Ulid Id { get; }
 
-	public string OriginalFileName { get; }
+	public string Name { get; }
 
 	public string S3Key { get; }
 
-	public long SizeInBytes { get; }
+	public long Size { get; }
 }
