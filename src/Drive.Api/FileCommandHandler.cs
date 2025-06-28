@@ -1,4 +1,5 @@
-﻿using Wolverine.Attributes;
+﻿using Drive.Api.Persistence;
+using Wolverine.Attributes;
 using File = Drive.Api.Domain.File;
 
 namespace Drive.Api;
@@ -13,7 +14,6 @@ public record CreateFileCommand(
 
 public class FileCommandHandler
 {
-	[Transactional]
 	public static async Task Handle(CreateFileCommand command, ApplicationDbContext context, ILogger<FileCommandHandler> logger)
 	{
 		var album = await context.Albums.FindAsync(command.AlbumId);

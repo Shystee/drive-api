@@ -1,4 +1,5 @@
 ﻿using Drive.Api.Domain;
+using Drive.Api.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Wolverine.Http;
 
@@ -10,8 +11,7 @@ public record CreateAlbumResponse(Ulid Id) : CreationResponse("/api/albums/" + I
 
 public class CreateAlbumEndpoint
 {
-	[Authorize]
-	[WolverinePost("/api/albums")]
+	[WolverinePost("/api/albums"), Authorize, Tags("Drive")]
 	public static CreateAlbumResponse CreateAlbum(CreateAlbumRequest request, ApplicationDbContext context, HttpContext httpContext)
 	{
 		var userId = httpContext.User.GetUserId();
