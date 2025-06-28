@@ -2,6 +2,7 @@ using Amazon.S3;
 using Amazon.SecretsManager;
 using Drive.Api;
 using Drive.Api.Core.Clerk;
+using Drive.Api.Core.OpenApi;
 using Drive.Api.Core.SecretManager;
 using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,10 @@ var username = builder.Configuration["username"];
 var password = builder.Configuration["password"];
 var connectionString = $"Host={host};Database=drive;Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(opts =>
+{
+	opts.AddDocumentTransformer<TransformerSecurityScheme>();
+});
 builder.Services.AddHealthChecks();
 builder.Services.AddWolverineHttp();
 
@@ -53,8 +57,6 @@ builder.Host.UseWolverine(opts =>
 	opts.PersistMessagesWithPostgresql(connectionString, "wolverine");
 	opts.UseAmazonSqsTransport().AutoProvision().AutoPurgeOnStartup();
 
-	opts.PublishMessage<StartUpload>().ToSqsQueue("start-upload");
-	opts.ListenToSqsQueue("start-upload");
 	opts.ListenToSqsQueue("upload-completed")
 		.ReceiveRawJsonMessage(typeof(S3UploadCompleted), o =>
 		{
@@ -73,7 +75,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 	app.MapOpenApi();
-	app.MapScalarApiReference();
+	app.MapScalarApiReference(opts =>
+	{
+		opts.Theme = ScalarTheme.DeepSpace;
+	});
 }
 
 app.UseHttpsRedirection();

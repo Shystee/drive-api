@@ -34,5 +34,12 @@ public class AlbumConfiguration : IEntityTypeConfiguration<Album>
 			.HasColumnType("text")
 			.HasMaxLength(100)
 			.IsRequired();
+		
+		builder.Navigation(a => a.Files)
+			.UsePropertyAccessMode(PropertyAccessMode.Field);
+
+		builder.HasMany(a => a.Files)
+			.WithOne()
+			.HasForeignKey("AlbumId");
 	}
 }

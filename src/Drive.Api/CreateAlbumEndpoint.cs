@@ -11,7 +11,7 @@ public record CreateAlbumResponse(Ulid Id) : CreationResponse("/api/albums/" + I
 public class CreateAlbumEndpoint
 {
 	[Authorize]
-	[WolverinePost("/api/album")]
+	[WolverinePost("/api/albums")]
 	public static CreateAlbumResponse CreateAlbum(CreateAlbumRequest request, ApplicationDbContext context, HttpContext httpContext)
 	{
 		var userId = httpContext.User.GetUserId();

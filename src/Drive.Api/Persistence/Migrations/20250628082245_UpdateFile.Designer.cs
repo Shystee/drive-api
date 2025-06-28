@@ -3,6 +3,7 @@ using System;
 using Drive.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Drive.Api.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250628082245_UpdateFile")]
+    partial class UpdateFile
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,11 +59,6 @@ namespace Drive.Api.Persistence.Migrations
                         .HasColumnType("char(26)")
                         .HasColumnName("id");
 
-                    b.Property<string>("AlbumId")
-                        .IsRequired()
-                        .HasColumnType("char(26)")
-                        .HasColumnName("album_id");
-
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -84,9 +82,6 @@ namespace Drive.Api.Persistence.Migrations
                         .HasColumnName("size");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AlbumId")
-                        .HasDatabaseName("ix_files_album_id");
 
                     b.HasIndex("S3Key")
                         .IsUnique()
@@ -185,21 +180,6 @@ namespace Drive.Api.Persistence.Migrations
                         {
                             t.ExcludeFromMigrations();
                         });
-                });
-
-            modelBuilder.Entity("Drive.Api.Domain.File", b =>
-                {
-                    b.HasOne("Drive.Api.Domain.Album", null)
-                        .WithMany("Files")
-                        .HasForeignKey("AlbumId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_files_album_id");
-                });
-
-            modelBuilder.Entity("Drive.Api.Domain.Album", b =>
-                {
-                    b.Navigation("Files");
                 });
 #pragma warning restore 612, 618
         }
