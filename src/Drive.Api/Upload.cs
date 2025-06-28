@@ -3,7 +3,7 @@ using Wolverine.Persistence.Sagas;
 
 namespace Drive.Api;
 
-public record S3UploadCompleted([property: SagaIdentity] string S3Key);
+public record S3UploadCompleted([property: SagaIdentity] string S3Key, int Size);
 
 public record UploadTimeout([property: SagaIdentity] string S3Key, TimeSpan ValidFor) : TimeoutMessage(ValidFor);
 
@@ -29,11 +29,11 @@ public class Upload : Saga
 	[SagaIdentity]
 	public string S3Key { get; }
 
-	public CreateFileCommand Handle(S3UploadCompleted upload, ILogger<Upload> logger, ApplicationDbContext context)
+	public CreateFileCommand Handle(S3UploadCompleted upload, ILogger<Upload> logger)
 	{
 		logger.LogInformation("Applying timeout to order {Key}", upload.S3Key);
 		MarkCompleted();
-		return new CreateFileCommand(S3Key, FileId, Name, ContentType, 10, AlbumId);
+		return new CreateFileCommand(S3Key, FileId, Name, ContentType, upload.Size, AlbumId);
 	}
 
 	public void Handle(UploadTimeout timeout, ILogger<Upload> logger)

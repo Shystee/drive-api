@@ -4,6 +4,7 @@ using Drive.Api;
 using Drive.Api.Core.Clerk;
 using Drive.Api.Core.OpenApi;
 using Drive.Api.Core.SecretManager;
+using Drive.Api.Persistence;
 using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;

@@ -9,24 +9,17 @@ public class S3EventToUploadCompletedConverter : JsonConverter<S3UploadCompleted
 	{
 		using var doc = JsonDocument.ParseValue(ref reader);
 		var root = doc.RootElement;
-
-		// Handle both single S3UploadCompleted and S3 event notification
 		if (root.TryGetProperty("S3Key", out _))
 		{
-			// Direct S3UploadCompleted message
 			return JsonSerializer.Deserialize<S3UploadCompleted>(root.GetRawText(), options);
 		}
 
-		// S3 Event Notification - extract the key
 		if (root.TryGetProperty("Records", out var records) && records.GetArrayLength() > 0)
 		{
-			var key = records[0]
-				.GetProperty("s3")
-				.GetProperty("object")
-				.GetProperty("key")
-				.GetString();
-
-			return new S3UploadCompleted(key!);
+			var @object = records[0].GetProperty("s3").GetProperty("object");
+			var key = @object.GetProperty("key").GetString()!;
+			var size = @object.GetProperty("size").GetInt32();
+			return new S3UploadCompleted(key, size);
 		}
 
 		throw new JsonException("Cannot deserialize to S3UploadCompleted");
