@@ -45,11 +45,6 @@ jobs:
               with:
                   useConfigFile: true
 
-            - name: Display version
-              run: |
-                  echo "Version: ${{ steps.gitversion.outputs.semVer }}"
-                  echo "Short SHA: ${{ steps.gitversion.outputs.shortSha }}"
-
     build-and-push:
         needs: version
         runs-on: ubuntu-latest
