@@ -33,6 +33,10 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_ecr_repository" "app" {
+  name = "arminasdev/drive-api"
+}
+
 # VPC Module
 module "vpc" {
   source = "../modules/vpc"
@@ -40,7 +44,6 @@ module "vpc" {
   availability_zones   = slice(data.aws_availability_zones.available.names, 0, 2)
   public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
   private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
-  enable_nat_gateway   = true
   tags                 = local.common_tags
 }
 
@@ -83,7 +86,7 @@ module "apprunner" {
   source = "../modules/apprunner"
 
   service_name        = "drive-api-${local.environment}"
-  image_repository    = "933887400757.dkr.ecr.eu-central-1.amazonaws.com/arminasdev/drive-api"
+  image_repository    = data.aws_ecr_repository.app.repository_url
   image_tag           = "0.0.1-test"
   ecr_access_role_arn = module.iam.apprunner_ecr_access_role_arn
   instance_role_arn   = module.iam.apprunner_instance_role_arn
