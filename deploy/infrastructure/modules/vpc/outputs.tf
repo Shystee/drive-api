@@ -14,6 +14,6 @@ output "internet_gateway_id" {
   value = aws_internet_gateway.this.id
 }
 
-output "nat_gateway_ids" {
-  value = var.enable_nat_gateway ? [for ng in aws_nat_gateway.this : ng.id] : []
+output "nat_gateway_id" {
+  value = aws_nat_gateway.this.id
 }

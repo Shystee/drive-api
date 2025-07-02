@@ -39,16 +39,15 @@ resource "aws_route_table_association" "public_assoc" {
 
 resource "aws_eip" "nat" {
   domain     = "vpc"
-  count      = var.enable_nat_gateway ? length(var.availability_zones) : 0
   depends_on = [aws_internet_gateway.this]
   tags       = var.tags
 }
 
 resource "aws_nat_gateway" "this" {
-  count         = var.enable_nat_gateway ? length(var.availability_zones) : 0
   allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = values(aws_subnet.public)[count.index].id
+  subnet_id     = aws_subnet.public[0].id
   tags          = var.tags
+  depends_on    = [aws_internet_gateway.this]
 }
 
 resource "aws_subnet" "private" {
@@ -66,10 +65,9 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route" "private_nat_gateway" {
-  count                  = var.enable_nat_gateway ? length(var.availability_zones) : 0
   route_table_id         = aws_route_table.private.id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.this[count.index].id
+  nat_gateway_id         = aws_nat_gateway.this.id
 }
 
 resource "aws_route_table_association" "private_assoc" {
